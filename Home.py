@@ -60,11 +60,15 @@ st.title('Lionel Messi')
 # Sidebar setup
 # upload_file = st.sidebar.file_uploader('Upload a file containing earthquake data')
 # Sidebar navigation
-st.sidebar.title('Sumário')
+st.sidebar.title('Sumário de Dados')
 options = st.sidebar.radio('Selecione o que deseja ver:', ['Home', 'Fontes de Dados', 'Motivação'])
 
-st.session_state['temporada'] = None
-st.session_state['jogo'] = None
+if 'temporada' not in st.session_state:
+    st.session_state['temporada'] = None
+
+if 'jogo' not in st.session_state:
+    st.session_state['jogo'] = None
+
 
 # Navigation options
 if options == 'Home':
