@@ -50,7 +50,8 @@ if temporada == 'Todas':
         # draw
         fig, ax = pitch.draw(figsize=(6.6, 4.125))
         fig.set_facecolor('#22312b')
-        ax.set_title(str(season))
+        title_obj = ax.set_title(str(season))
+        title_obj.set_color('#ffffff')
         bin_statistic = pitch.bin_statistic(dfhm_filtered['x_messi'],dfhm_filtered['y_messi'], statistic='count', bins=(35, 35))
         bin_statistic['statistic'] = scipy.ndimage.gaussian_filter(bin_statistic['statistic'], 1)
         if norm_scale:
@@ -61,7 +62,7 @@ if temporada == 'Todas':
         cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
         cbar.outline.set_edgecolor('#efefef')
         cbar.ax.yaxis.set_tick_params(color='#efefef')
-        ticks = plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#22312b')
+        ticks = plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#ffffff') # colorchange
         if k == 0:
             col1.pyplot(fig)
             k = 1
@@ -125,7 +126,7 @@ else:
     cbar = fig.colorbar(pcm, ax=ax, shrink=0.6)
     cbar.outline.set_edgecolor('#efefef')
     cbar.ax.yaxis.set_tick_params(color='#efefef')
-    ticks = plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#22312b')
+    ticks = plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='#ffffff')
 
     if len(dfhm_filtered) == 0:
         st.write("Messi não participou desta partida!")
