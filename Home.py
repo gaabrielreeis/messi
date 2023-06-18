@@ -10,6 +10,10 @@ st.set_page_config(layout="wide")
 # Functions for each of the pages
 def home():
     st.header('Carreira no Barcelona Através dos Dados')
+
+    st.write('Fernando Vilela Brandão - 2021421907')
+    st.write('Gabriel Reis Gama Barbosa - 2019027555')
+    st.write('Juliana Espíndola Botelho - 2019041558')
     image = Image.open('messi.jpg')
     st.image(image, caption='',width=800)
 
