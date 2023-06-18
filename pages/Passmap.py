@@ -7,74 +7,34 @@ import matplotlib.pyplot as plt
 from plotly_football_pitch import make_pitch_figure, PitchDimensions
 import plotly.graph_objects as go
 import numpy as np
+from  datatable import fread
 
 st.title('Passmap')
 
+df_avg_position_by_player = fread('df_avg_position_by_player.csv').to_pandas()
+df_duplas_loc = fread('df_duplas_loc.csv').to_pandas()
+
+if st.session_state['temporada'] == 'Todas':
+  st.session_state['temporada'] = '2020/2021'
+
+temporadas = list(df_avg_position_by_player.temporada.unique())
+temporada = st.sidebar.selectbox('Temporada', temporadas, index=temporadas.index(st.session_state['temporada']))
+df_avg_position_by_player = df_avg_position_by_player[df_avg_position_by_player['temporada'] == temporada]
 
 
-laliga = sb.competitions().query("competition_name == 'La Liga'")
+if temporada != st.session_state['temporada'] and temporada != "Todas":
+    st.session_state['temporada'] = temporada
+    st.session_state['jogo'] = None
 
+jogos = list(df_avg_position_by_player[df_avg_position_by_player['temporada'] == temporada].Jogo.unique())
+jogo_escolhido = st.session_state['jogo'] if st.session_state['jogo'] != None else jogos[0]
+jogo = st.sidebar.selectbox('Jogo', jogos, jogos.index(jogo_escolhido))
+st.session_state['jogo'] = jogo
 
-temporada = st.sidebar.selectbox('Temporada', laliga.season_name)
-temporada_escolhida = laliga[laliga['season_name'] == temporada].iloc[0]
-
-jogos_temporada = sb.matches(competition_id=temporada_escolhida.competition_id, season_id=temporada_escolhida.season_id)
-jogos_temporada['Jogo'] = jogos_temporada['home_team'] + ' x ' + jogos_temporada['away_team'] 
-jogo = st.sidebar.selectbox('Jogo', jogos_temporada.Jogo)
-
-ht, at = jogo.split(' x ')
-jogo_escolhido = jogos_temporada[(jogos_temporada['home_team'] == ht) & (jogos_temporada['away_team'] == at)].iloc[0].match_id
-
-events = sb.events(match_id=jogo_escolhido)
-
-StartingXI = [x['player']['name'] for x in events[(events['type'] == 'Starting XI') & (events['team'] == 'Barcelona')].iloc[0].tactics['lineup']]
-
-events = events[(events['type'] == 'Pass')]
-events = events[(events['player'].isin(StartingXI)) & (events['pass_recipient'].isin(StartingXI))]
-events = events.query("""
- team == 'Barcelona' 
-""")
-events.dropna(subset=['pass_recipient', 'player'], inplace=True)
-
-events['x'] = events['location'].apply(lambda row: row[0])
-events['y'] = events['location'].apply(lambda row: row[1])
-events['y'] = 75 - events['y']
-avg_position_by_player = events.groupby('player').mean()[['x', 'y']].reset_index()
-
-df = events[['pass_recipient', 'player']].rename(columns={'pass_recipient':'player1', 'player':'player2'})
-df = df.dropna()
-
-import pandas as pd
-
-# Assuming your dataframe is called 'df'
-# df = pd.DataFrame({'player1': ['John', 'Alice', 'Bob', 'Alice'],
-#                    'player2': ['Alice', 'Bob', 'John', 'John']})
-
-# Concatenate the two columns with a separator to create a combined column
-df['combination'] = df[['player1', 'player2']].apply(lambda x: '_'.join(sorted(x)), axis=1)
-
-# Count the occurrences of each combination
-combination_counts = df['combination'].value_counts()
-
-duplas = pd.DataFrame(combination_counts).reset_index().rename(columns={'index':'dupla'})
-duplas['player1'] = duplas['dupla'].apply(lambda x: x.split('_')[0])
-duplas['player2'] = duplas['dupla'].apply(lambda x: x.split('_')[1])
-duplas['interaction'] = duplas['combination']
-
-avg_position_by_player['loc'] = avg_position_by_player.apply(lambda row: np.array([row.x, row.y]), axis=1)
-pos = {}
-for i, row in avg_position_by_player[['player', 'loc']].iterrows():
-  pos[row['player']] = np.array(row['loc'])
-
-duplas_loc = duplas.merge(avg_position_by_player[['player','x','y']], left_on='player1', right_on='player').rename(columns={'x':'x1','y':'y1'})
-duplas_loc = duplas_loc.merge(avg_position_by_player[['player','x','y']], left_on='player2', right_on='player').rename(columns={'x':'x2','y':'y2'})
-
-player_interactions = pd.concat([duplas_loc[['player1', 'interaction']].rename(columns={'player1':'player'}),
-                                 duplas_loc[['player2', 'interaction']].rename(columns={'player2':'player'})])
-player_interactions = player_interactions.groupby('player').sum().reset_index()
-
-avg_position_by_player = avg_position_by_player.merge(player_interactions, how='left').fillna(0)
-
+avg_position_by_player = df_avg_position_by_player[(df_avg_position_by_player['temporada'] == temporada) & 
+                                                   (df_avg_position_by_player['Jogo'] == jogo)]
+duplas_loc = df_duplas_loc[(df_duplas_loc['temporada'] == temporada) & 
+                              (df_duplas_loc['Jogo'] == jogo)]
 
 min_passes = st.sidebar.slider('Mínimo de passes para haver conexão', 0, 30, 10)
 duplas_loc = duplas_loc[duplas_loc['interaction'] > min_passes]
@@ -115,7 +75,9 @@ for i,row in duplas_loc.iterrows():
     
     fig.add_trace(line_trace)
 
-colors = ['rgba(255,0,0,1)' if p != highlight_player else 'rgba(100,100,255,1)' for p in avg_position_by_player.player] 
+barca_red = '#A50044'
+barca_blue = '#004D98'
+colors = [barca_red if p != highlight_player else barca_blue for p in avg_position_by_player.player] 
 
 fig.add_trace(go.Scatter(x=avg_position_by_player.x,
                          y=avg_position_by_player.y,
@@ -135,3 +97,5 @@ st.sidebar.write('')
 st.sidebar.write('')
 
 st.plotly_chart(fig)
+
+
