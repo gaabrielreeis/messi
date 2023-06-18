@@ -7,6 +7,12 @@ import scipy.ndimage
 import matplotlib.pyplot as plt
 from datatable import fread
 
+if 'temporada' not in st.session_state:
+    st.session_state['temporada'] = None
+
+if 'jogo' not in st.session_state:
+    st.session_state['jogo'] = None
+
 dfhm = fread('messi_heatmap.csv').to_pandas()
 
 st.title('Heatmap')
