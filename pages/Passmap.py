@@ -9,6 +9,12 @@ import plotly.graph_objects as go
 import numpy as np
 from  datatable import fread
 
+if 'temporada' not in st.session_state:
+    st.session_state['temporada'] = None
+
+if 'jogo' not in st.session_state:
+    st.session_state['jogo'] = None
+
 st.title('Passmap')
 
 df_avg_position_by_player = fread('df_avg_position_by_player.csv').to_pandas()
